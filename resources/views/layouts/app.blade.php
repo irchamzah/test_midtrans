@@ -56,6 +56,7 @@
                         @else
                         <li class="nav-item dropdown d-flex">
                             <a href="/cart" class="nav-link">Keranjang</a>
+                            <a href="/transaction" class="nav-link">Transaksi</a>
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                 {{ Auth::user()->name }}
