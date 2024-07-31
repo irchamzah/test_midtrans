@@ -90,7 +90,7 @@
     @stack('scripts')
 
     <script>
-        // Menghitung jumlah keranjang
+        // Menghitung produk di keranjang
         $(document).ready(function() {
             $.ajax({
                 url: '{{ route('cart.count') }}',
@@ -109,7 +109,7 @@
             });
         });
 
-        // Mengambil jumlah transaksi yang belum terbayar
+        // Menghitung transaksi yang belum terbayar
         $.ajax({
             url: '{{ route('transaction.unpaidCount') }}',
             method: 'GET',

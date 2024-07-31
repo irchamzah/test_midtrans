@@ -23,52 +23,38 @@
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $transaction->order_id }}</td>
-                @if($transaction->status == 'Menunggu Pembayaran')
+
+                {{-- Status transaksi --}}
+                @php
+                $statusClasses = [
+                'Menunggu Pembayaran' => 'warning',
+                'Pending' => 'secondary',
+                'Ditolak' => 'secondary',
+                'Dibatalkan' => 'secondary',
+                'Kedaluwarsa' => 'secondary',
+                'Selesai' => 'success',
+                ];
+                @endphp
                 <td>
-                    <div class="alert alert-warning text-center" role="alert">{{ ucfirst($transaction->status) }}</div>
+                    <div class="alert alert-{{ $statusClasses[$transaction->status] ?? 'secondary' }} text-center"
+                        role="alert">
+                        {{ ucfirst($transaction->status) }}
+                    </div>
                 </td>
-                @elseif($transaction->status == 'Pending')
-                <td>
-                    <div class="alert alert-secondary text-center" role="alert">{{ ucfirst($transaction->status)
-                        }}</div>
-                </td>
-                @elseif($transaction->status == 'Ditolak')
-                <td>
-                    <div class="alert alert-secondary text-center" role="alert">{{ ucfirst($transaction->status)
-                        }}</div>
-                </td>
-                @elseif($transaction->status == 'Dibatalkan')
-                <td>
-                    <div class="alert alert-secondary text-center" role="alert">{{ ucfirst($transaction->status)
-                        }}</div>
-                </td>
-                @elseif($transaction->status == 'Kedaluwarsa')
-                <td>
-                    <div class="alert alert-secondary text-center" role="alert">{{ ucfirst($transaction->status)
-                        }}</div>
-                </td>
-                @elseif($transaction->status == 'Selesai')
-                <td>
-                    <div class="alert alert-success text-center" role="alert">{{ ucfirst($transaction->status)
-                        }}</div>
-                </td>
-                @endif
+                {{-- Status transaksi end --}}
                 <td>{{ $transaction->created_at->format('d-m-Y H:i:s') }}</td>
                 <td>
                     <ul>
                         @foreach($transaction->items as $item)
                         <li>
-                            @if($item->product)
                             {{ $item->product->name }} ({{ $item->quantity }})
-                            @else
-                            Produk tidak ditemukan ({{ $item->quantity }})
-                            @endif
                         </li>
                         @endforeach
                     </ul>
                 </td>
                 <td>Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</td>
                 <td>
+                    {{-- Tombol Aksi --}}
                     @if($transaction->status == 'Pending')
                     <button type="button" class="btn btn-warning continue-payment-button"
                         data-snap-token="{{ $transaction->snap_token }}"
@@ -93,7 +79,7 @@
                     @endif
                     @endif
                     @endif
-
+                    {{-- Tombol Aksi end --}}
                 </td>
             </tr>
             @endforeach
@@ -110,11 +96,11 @@
 <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
 <script>
     $(document).ready(function() {
-        // Function untuk Button Bayar
+        // Function untuk Tombol Bayar
         $('.pay-button').on('click', function() {
             var transactionId = $(this).data('transaction-id');
             var orderId = $(this).data('order-id');
-            
+            // Menjalankan transaction.pay untuk mengenerate snapToken, snapToken akan digunakan di tombol "Lanjutkan Pembayaran"
             $.ajax({
                 url: '{{ route("transaction.pay") }}',
                 method: 'POST',
@@ -132,14 +118,15 @@
             });
         });
 
-        // Function untuk Button Lanjutkan Pembayaran
+        // Function untuk Tombol "Lanjutkan Pembayaran"
         $('.continue-payment-button').on('click', function() {
             var snapToken = $(this).data('snap-token');
             var transactionId = $(this).data('transaction-id');
             var orderId = $(this).data('order-id');
-            
+            // Menjalankan snap midtrans
             snap.pay(snapToken, {
                 onSuccess: function(result) {
+                    // Jika pembayaran transaksi sukses, ubah status menjadi Selesai
                     $.ajax({
                         url: '{{ route("transaction.updateStatus") }}',
                         method: 'POST',
@@ -150,7 +137,6 @@
                             status: 'Selesai'
                         },
                         success: function(response) {
-                            
                             location.reload();
                         },
                         error: function(xhr) {
@@ -159,44 +145,30 @@
                     });
                 },
                 onPending: function(result) {
+                    // Jika transaksi pending, ubah status menjadi Menunggu Pembayaran
                     $.ajax({
-                                url: '{{ route("transaction.updateStatus") }}',
-                                method: 'POST',
-                                data: {
-                                    _token: '{{ csrf_token() }}',
-                                    transaction_id: transactionId,
-                                    status: 'Menunggu Pembayaran'
-                                },
-                                success: function(response) {
-                                    location.reload();
-                                },
-                                error: function(xhr) {
-                                    alert('Failed to update transaction status: ' + xhr.responseJSON.message);
-                                }
-                            });
-                },
-                onError: function(result) {
-                    alert('Payment failed: ' + result.status_message);
-                    // Jika gagal, coba jalankan sync status
-                    $.ajax({
-                        url: '{{ route("transaction.delete") }}',
+                        url: '{{ route("transaction.updateStatus") }}',
                         method: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}',
-                            transaction_id: transactionId
+                            transaction_id: transactionId,
+                            status: 'Menunggu Pembayaran'
                         },
                         success: function(response) {
                             location.reload();
                         },
                         error: function(xhr) {
-                            alert('Error: ' + xhr.responseJSON.message);
+                            alert('Failed to update transaction status: ' + xhr.responseJSON.message);
                         }
                     });
+                },
+                onError: function(result) {
+                    alert('Failed to continue payment: ' + result.error_messages);
                 }
             });
         });
 
-        // Function untuk Button Batalkan Pesanan
+        // Function untuk Tombol Batalkan Pesanan
         $('.cancel-order-button').on('click', function() {
             var orderId = $(this).data('order-id');
             var transactionId = $(this).data('transaction-id');
@@ -211,6 +183,7 @@
                     order_id: orderId,
                     transaction_id: transactionId
                 },
+                // jika berhasil akan reload.
                 success: function(response) {
                     location.reload();
                 },
@@ -218,17 +191,17 @@
                     alert('Failed to cancel transaction: ' + xhr.responseJSON.message);
                     // Jika gagal, coba jalankan sync status
                     $.ajax({
-                        url: '{{ route("transaction.delete") }}',
+                        url: '{{ route("transaction.syncStatus") }}',
                         method: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}',
-                            transaction_id: transactionId
+                            order_id: orderId
                         },
                         success: function(response) {
                             location.reload();
                         },
                         error: function(xhr) {
-                            alert('Error: ' + xhr.responseJSON.message);
+                            alert('Failed to sync transaction status: ' + xhr.responseJSON.message);
                         }
                     });
                     
@@ -236,7 +209,7 @@
             });
         });
 
-        // Function untuk Button Hapus
+        // Function untuk Tombol Hapus
         $('.delete-button').on('click', function() {
             if (!confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) return;
             var transactionId = $(this).data('transaction-id');
@@ -257,7 +230,7 @@
             });
         });
 
-        // Function untuk Button Sync Status
+        // Function untuk Tombol Sync Status
         $('.sync-status-button').on('click', function() {
         var orderId = $(this).data('order-id');
         

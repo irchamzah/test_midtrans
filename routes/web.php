@@ -35,6 +35,8 @@ Route::post('/transaction/cancel', [TransactionController::class, 'cancel'])->na
 Route::get('/transaction/unpaid-count', [TransactionController::class, 'getUnpaidCount'])->name('transaction.unpaidCount');
 Route::post('/transaction/sync-status', [TransactionController::class, 'syncStatus'])->name('transaction.syncStatus');
 
-
+Route::get('/transaction/finish', [TransactionController::class, 'finish'])->name('transaction.finish');
+Route::get('/transaction/unfinish', [TransactionController::class, 'unfinish'])->name('transaction.unfinish');
+Route::get('/transaction/error', [TransactionController::class, 'error'])->name('transaction.error');
 
 Route::get('/cart/count', [CartController::class, 'getCartCount'])->name('cart.count');

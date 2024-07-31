@@ -36,6 +36,7 @@
         @endif
 
     </div>
+    {{-- Jika keranjang kosong, hilangkan tombol checkout --}}
     @if($cartItems->isEmpty())
     @else
     <div class="mt-4">

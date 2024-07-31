@@ -13,6 +13,11 @@ class TransactionController extends Controller
     public function index()
     {
         $transactions = Transaction::where('user_id', auth()->id())->with('items.product')->orderBy('created_at', 'desc')->paginate(5);
+
+        // foreach ($transactions as $transaction) {
+        //     app('App\Http\Controllers\TransactionController')->syncStatus($transaction->order_id);
+        // }
+
         return view('transaction.index', compact('transactions'));
     }
 
@@ -28,9 +33,9 @@ class TransactionController extends Controller
 
         // Midtrans Configuration
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = false;
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false); // Set to true for production
+        Config::$isSanitized = env('MIDTRANS_IS_SANITIZED', true);
+        Config::$is3ds = env('MIDTRANS_IS_3DS', true);
 
         $itemDetails = $transaction->items->map(function ($item) {
             if ($item->product) {
@@ -62,6 +67,11 @@ class TransactionController extends Controller
                 'email' => $transaction->user->email,
             ],
             'item_details' => $itemDetails,
+            'callbacks' => [
+                'finish' => route('transaction.finish'),
+                'unfinish' => route('transaction.unfinish'),
+                'error' => route('transaction.error'),
+            ],
         ];
 
         // Get Snap Token from Midtrans
@@ -108,6 +118,7 @@ class TransactionController extends Controller
 
     public function cancel(Request $request)
     {
+        // dd($request->all());
         $request->validate([
             'transaction_id' => 'required|exists:transactions,id',
         ]);
@@ -118,9 +129,9 @@ class TransactionController extends Controller
 
         // Midtrans Configuration
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = false; // Set to true for production
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false); // Set to true for production
+        Config::$isSanitized = env('MIDTRANS_IS_SANITIZED', true);
+        Config::$is3ds = env('MIDTRANS_IS_3DS', true);
 
         try {
             $cancel = \Midtrans\Transaction::cancel($request->order_id);
@@ -146,11 +157,11 @@ class TransactionController extends Controller
 
     public function syncStatus(Request $request)
     {
-        // dd($request->order_id);
+        // dd($request->all());
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = false; // Set to true for production
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false); // Set to true for production
+        Config::$isSanitized = env('MIDTRANS_IS_SANITIZED', true);
+        Config::$is3ds = env('MIDTRANS_IS_3DS', true);
 
         try {
             /** @var \stdClass $status */
@@ -166,7 +177,6 @@ class TransactionController extends Controller
 
             return response()->json(['message' => 'Transaction status synced successfully.']);
         } catch (\Exception $e) {
-
             return response()->json(['message' => 'Failed to sync transaction status: ' . $e->getMessage()], 500);
         }
     }
@@ -188,5 +198,26 @@ class TransactionController extends Controller
             default:
                 return 'Kedaluwarsa';
         }
+    }
+
+    public function finish(Request $request)
+    {
+        // Handle successful payment
+        $orderId = $request->input('order_id');
+        return view('transaction.finish', compact('orderId'));
+    }
+
+    public function unfinish(Request $request)
+    {
+        // Handle unfinished payment
+        $orderId = $request->input('order_id');
+        return view('transaction.unfinish', compact('orderId'));
+    }
+
+    public function error(Request $request)
+    {
+        // Handle payment error
+        $orderId = $request->input('order_id');
+        return view('transaction.error', compact('orderId'));
     }
 }
