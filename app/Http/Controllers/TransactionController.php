@@ -12,7 +12,7 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $transactions = Transaction::where('user_id', auth()->id())->with('items.product')->get();
+        $transactions = Transaction::where('user_id', auth()->id())->with('items.product')->orderBy('created_at', 'desc')->get();
         return view('transaction.index', compact('transactions'));
     }
 
