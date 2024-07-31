@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
@@ -79,6 +80,7 @@ class CartController extends Controller
 
         // Buat transaksi baru
         $transaction = Transaction::create([
+            'order_id' => Str::uuid()->toString(),
             'user_id' => $userId,
             'total_price' => $cartItems->reduce(function ($carry, $item) {
                 return $carry + ($item->product->price * $item->quantity);
@@ -100,5 +102,12 @@ class CartController extends Controller
 
         // Redirect ke halaman transaksi
         return redirect()->route('transaction.index');
+    }
+
+    public function getCartCount()
+    {
+        // Mengambil jumlah item dalam keranjang untuk pengguna yang sedang login
+        $cartCount = Cart::where('user_id', auth()->id())->count();
+        return $cartCount;
     }
 }

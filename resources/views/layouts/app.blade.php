@@ -55,8 +55,11 @@
                         @endif
                         @else
                         <li class="nav-item dropdown d-flex">
-                            <a href="/cart" class="nav-link">Keranjang</a>
-                            <a href="/transaction" class="nav-link">Transaksi</a>
+                            <a href="/cart" class="nav-link">Keranjang <span id="cart-count"
+                                    style="display: none;"></span></a>
+                            <a href="/transaction" class="nav-link">
+                                Transaksi <span id="transaction-count" style="display: none;"></span>
+                            </a>
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" role="button"
                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                 {{ Auth::user()->name }}
@@ -85,6 +88,44 @@
     </div>
 
     @stack('scripts')
+
+    <script>
+        // Menghitung jumlah keranjang
+        $(document).ready(function() {
+            $.ajax({
+                url: '{{ route('cart.count') }}',
+                method: 'GET',
+                success: function(response) {
+                    var cartCount = response;
+                if (cartCount > 0) {
+                    $('#cart-count').text('(' + cartCount + ')').show();
+                } else {
+                    $('#cart-count').hide();
+                }
+                },
+                error: function(xhr) {
+                    console.error('Failed to get cart count:', xhr.responseText);
+                }
+            });
+        });
+
+        // Mengambil jumlah transaksi yang belum terbayar
+        $.ajax({
+            url: '{{ route('transaction.unpaidCount') }}',
+            method: 'GET',
+            success: function(response) {
+                var transactionCount = response;
+                if (transactionCount > 0) {
+                    $('#transaction-count').text('(' + transactionCount + ')').show();
+                } else {
+                    $('#transaction-count').hide();
+                }
+            },
+            error: function(xhr) {
+                console.error('Failed to get transaction count:', xhr.responseText);
+            }
+        });
+    </script>
 </body>
 
 </html>

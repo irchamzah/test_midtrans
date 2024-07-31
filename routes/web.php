@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Auth::routes();
+
 Route::get('/', [App\Http\Controllers\ProductController::class, 'index']);
 Route::get('/home', [App\Http\Controllers\ProductController::class, 'index']);
 
@@ -30,13 +32,9 @@ Route::post('/transaction/pay', [TransactionController::class, 'pay'])->name('tr
 Route::post('/transaction/delete', [TransactionController::class, 'delete'])->name('transaction.delete');
 Route::post('/transaction/update-status', [TransactionController::class, 'updateStatus'])->name('transaction.updateStatus');
 Route::post('/transaction/cancel', [TransactionController::class, 'cancel'])->name('transaction.cancel');
+Route::get('/transaction/unpaid-count', [TransactionController::class, 'getUnpaidCount'])->name('transaction.unpaidCount');
+Route::post('/transaction/sync-status', [TransactionController::class, 'syncStatus'])->name('transaction.syncStatus');
 
 
 
-
-Route::get('/debug', function () {
-    return view('debug.index');
-})->name('debug.index');
-
-
-Auth::routes();
+Route::get('/cart/count', [CartController::class, 'getCartCount'])->name('cart.count');

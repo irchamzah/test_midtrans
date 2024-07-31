@@ -14,6 +14,7 @@ class Transaction extends Model
         'total_price',
         'status',
         'snap_token',
+        'order_id',
     ];
 
     public function items()

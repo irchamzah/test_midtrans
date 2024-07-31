@@ -4,6 +4,13 @@
 <div class="container mt-5">
     <h1 class="mb-4">Keranjang Belanja</h1>
     <div class="row">
+        @if($cartItems->isEmpty())
+        <div class="col-md-12">
+            <div class="alert alert-info text-center">
+                Keranjang Anda kosong. Silakan <a href="/">tambahkan produk</a> ke keranjang.
+            </div>
+        </div>
+        @else
         @foreach($cartItems as $item)
         <div class="col-md-4 mb-4">
             <div class="card">
@@ -26,11 +33,16 @@
             </div>
         </div>
         @endforeach
+        @endif
+
     </div>
+    @if($cartItems->isEmpty())
+    @else
     <div class="mt-4">
         <h4>Total Harga: <strong>Rp {{ number_format($totalPrice, 0, ',', '.') }}</strong></h4>
         <a href="{{ route('cart.checkout') }}" class="btn btn-primary">Checkout</a>
     </div>
+    @endif
 </div>
 @endsection
 
