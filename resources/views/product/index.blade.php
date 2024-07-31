@@ -44,7 +44,11 @@
                 alert(response.message);
             },
             error: function(response) {
-                alert('Error: ' + response.responseJSON.message);
+                if (response.status === 401) {
+                        window.location.href = '{{ route('login') }}';
+                    } else {
+                        alert('Error: ' + response.responseJSON.message);
+                    }
             }
         });
     });

@@ -27,8 +27,16 @@ Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.ch
 
 Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction.index');
 Route::post('/transaction/pay', [TransactionController::class, 'pay'])->name('transaction.pay');
+Route::post('/transaction/delete', [TransactionController::class, 'delete'])->name('transaction.delete');
+Route::post('/transaction/update-status', [TransactionController::class, 'updateStatus'])->name('transaction.updateStatus');
+Route::post('/transaction/cancel', [TransactionController::class, 'cancel'])->name('transaction.cancel');
 
 
+
+
+Route::get('/debug', function () {
+    return view('debug.index');
+})->name('debug.index');
 
 
 Auth::routes();

@@ -1,0 +1,45 @@
+transaction/index.blade.php
+
+{{-- <button type="button" class="btn btn-secondary done-order-button"
+                        data-snap-token="{{ $transaction->snap_token }}"
+                        data-transaction-id="{{ $transaction->id }}">Selesaikan Pesanan</button> --}}
+
+
+        // $('.done-order-button').on('click', function() {
+        //     var transactionId = $(this).data('transaction-id');
+            
+        //     $.ajax({
+        //         url: '{{ route("transaction.done") }}',
+        //         method: 'POST',
+        //         data: {
+        //             _token: '{{ csrf_token() }}',
+        //             transaction_id: transactionId
+        //         },
+        //         success: function(response) {
+        //             location.reload();
+        //         },
+        //         error: function(xhr) {
+        //             alert('Error: ' + xhr.responseJSON.message);
+        //         }
+        //     });
+        // });
+
+
+
+TransactionController.php
+
+    // public function done(Request $request)
+    // {
+    //     $transaction = Transaction::findOrFail($request->transaction_id);
+
+    //     $transaction->status = 'Selesai';
+    //     $transaction->save();
+
+    //     // Return Snap Token as JSON response
+    //     return response()->json(['message' => 'Transaction status updated successfully']);
+    // }
+
+
+    web.php
+
+    // Route::post('/transaction/done', [TransactionController::class, 'done'])->name('transaction.done');

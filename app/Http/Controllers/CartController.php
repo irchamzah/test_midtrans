@@ -83,7 +83,7 @@ class CartController extends Controller
             'total_price' => $cartItems->reduce(function ($carry, $item) {
                 return $carry + ($item->product->price * $item->quantity);
             }, 0),
-            'status' => 'pending',
+            'status' => 'Menunggu Pembayaran',
         ]);
 
         // Simpan item dari keranjang ke dalam transaction_items

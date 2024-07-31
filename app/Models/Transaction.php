@@ -13,10 +13,15 @@ class Transaction extends Model
         'user_id',
         'total_price',
         'status',
+        'snap_token',
     ];
 
     public function items()
     {
         return $this->hasMany(TransactionItem::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }
