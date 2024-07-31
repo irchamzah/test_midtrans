@@ -28,7 +28,7 @@ class TransactionController extends Controller
 
         // Midtrans Configuration
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = true;
+        Config::$isProduction = false;
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
@@ -118,7 +118,7 @@ class TransactionController extends Controller
 
         // Midtrans Configuration
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = true; // Set to true for production
+        Config::$isProduction = false; // Set to true for production
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
@@ -148,7 +148,7 @@ class TransactionController extends Controller
     {
         // dd($request->order_id);
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = true; // Set to true for production
+        Config::$isProduction = false; // Set to true for production
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
