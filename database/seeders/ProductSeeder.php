@@ -15,8 +15,8 @@ class ProductSeeder extends Seeder
      */
     public function run()
     {
-        Product::create(['image' => 'products/converse_hitam.jpg', 'name' => 'Converse Hitam', 'description' => 'Deskripsi untuk Converse Hitam', 'price' => 100000]);
-        Product::create(['image' => 'products/converse_putih.jpg', 'name' => 'Converse Putih', 'description' => 'Deskripsi untuk Converse Putih', 'price' => 200000]);
-        Product::create(['image' => 'products/converse_merah.jpg', 'name' => 'Converse Merah', 'description' => 'Deskripsi untuk Converse Merah', 'price' => 300000]);
+        Product::create(['image' => 'products/converse_hitam.jpg', 'name' => 'Converse Hitam', 'description' => 'Deskripsi untuk Converse Hitam', 'price' => 1000]);
+        Product::create(['image' => 'products/converse_putih.jpg', 'name' => 'Converse Putih', 'description' => 'Deskripsi untuk Converse Putih', 'price' => 1200]);
+        Product::create(['image' => 'products/converse_merah.jpg', 'name' => 'Converse Merah', 'description' => 'Deskripsi untuk Converse Merah', 'price' => 1300]);
     }
 }
