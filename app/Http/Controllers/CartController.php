@@ -14,10 +14,12 @@ class CartController extends Controller
 
     public function __construct()
     {
+        // Cek apakah user sudah login
         $this->middleware('auth');
     }
     public function index()
     {
+        // Mengambil cart item dari pengguna yang sedang login
         $cartItems = Cart::with('product')->where('user_id', auth()->id())->get();
         $totalPrice = $cartItems->reduce(function ($carry, $item) {
             return $carry + ($item->product->price * $item->quantity);
@@ -27,11 +29,13 @@ class CartController extends Controller
 
     public function add(Request $request)
     {
+        // Validasi data
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1'
         ]);
 
+        // Tambahkan item ke keranjang
         $cart = Cart::updateOrCreate(
             ['user_id' => auth()->id(), 'product_id' => $request->input('product_id')],
             ['quantity' => DB::raw('quantity + ' . $request->input('quantity'))]
@@ -42,10 +46,12 @@ class CartController extends Controller
 
     public function update(Request $request)
     {
+        // Pilih item yang akan diupdate
         $cartItem = Cart::where('user_id', auth()->id())
             ->where('id', $request->input('product_id'))
             ->first();
 
+        // Jika item ada maka save ke database
         if ($cartItem) {
             $cartItem->quantity = $request->input('quantity');
             $cartItem->save();
@@ -58,16 +64,14 @@ class CartController extends Controller
 
     public function remove(Request $request)
     {
+        // Hapus item dari keranjang
+        Cart::where('user_id', auth()->id())
+            ->where('id', $request->input('product_id'))
+            ->delete();
 
-        $userId = auth()->id();
-        $productId = $request->input('product_id');
-
-        error_log("User ID: $userId");
-        error_log("Product ID: $productId");
-
-        $cart = Cart::where('user_id', auth()->id())->where('id', $request->input('product_id'))->delete();
         return response()->json(['success' => true, 'message' => 'Product removed from cart']);
     }
+
 
     public function checkout()
     {

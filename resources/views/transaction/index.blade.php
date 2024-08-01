@@ -93,7 +93,12 @@
 @endsection
 
 @push('scripts')
-<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+
+{{-- Jika mode Development maka pakai sandbox, jika tidak maka pakai Production --}}
+<script
+    src="{{ env('MIDTRANS_IS_PRODUCTION', false) ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+    data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+
 <script>
     $(document).ready(function() {
         // Function untuk Tombol Bayar

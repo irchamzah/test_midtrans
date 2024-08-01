@@ -10,10 +10,16 @@ use Midtrans\Transaction as MidtransTransaction;
 
 class TransactionController extends Controller
 {
+    public function __construct()
+    {
+        // Cek apakah user sudah login
+        $this->middleware('auth');
+    }
     public function index()
     {
         $transactions = Transaction::where('user_id', auth()->id())->with('items.product')->orderBy('created_at', 'desc')->paginate(5);
 
+        // AKTIFKAN JIKA INGIN SELALU MEMPERBARUI STATUS TRANSAKSI SETIAP DI REFRESH
         // foreach ($transactions as $transaction) {
         //     app('App\Http\Controllers\TransactionController')->syncStatus($transaction->order_id);
         // }
@@ -23,20 +29,20 @@ class TransactionController extends Controller
 
     public function pay(Request $request)
     {
-        // Validate the request
+        // Validasi data
         $request->validate([
             'transaction_id' => 'required|exists:transactions,id',
         ]);
 
-        // Find the transaction
         $transaction = Transaction::findOrFail($request->transaction_id);
 
         // Midtrans Configuration
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false); // Set to true for production
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized = env('MIDTRANS_IS_SANITIZED', true);
         Config::$is3ds = env('MIDTRANS_IS_3DS', true);
 
+        // Membuat item details
         $itemDetails = $transaction->items->map(function ($item) {
             if ($item->product) {
                 return [
@@ -56,7 +62,7 @@ class TransactionController extends Controller
         })->toArray();
 
 
-        // Create Midtrans Snap parameters
+        // Membuat Midtrans Snap parameters
         $params = [
             'transaction_details' => [
                 'order_id' => $request->order_id,
@@ -74,7 +80,7 @@ class TransactionController extends Controller
             ],
         ];
 
-        // Get Snap Token from Midtrans
+        // Ambil Snap Token dari Midtrans
         $snapToken = Snap::getSnapToken($params);
 
         $transaction->order_id = $request->order_id;
@@ -82,18 +88,20 @@ class TransactionController extends Controller
         $transaction->status = 'Pending';
         $transaction->save();
 
-        // Return Snap Token as JSON response
+        // Kirim Snap Token sebagai JSON response
         return response()->json(['snap_token' => $snapToken]);
     }
 
     public function delete(Request $request)
     {
+        // Validasi data
         $request->validate([
             'transaction_id' => 'required|exists:transactions,id',
         ]);
 
         $transaction = Transaction::findOrFail($request->transaction_id);
 
+        // Hanya bisa menghapus transaksi yang statusnya 'Menunggu Pembayaran'
         if ($transaction->status == 'Menunggu Pembayaran') {
             $transaction->delete();
             return response()->json(['message' => 'Transaksi berhasil dihapus.']);
@@ -104,11 +112,13 @@ class TransactionController extends Controller
 
     public function updateStatus(Request $request)
     {
+        // Validasi data
         $request->validate([
             'transaction_id' => 'required|exists:transactions,id',
             'status' => 'required|in:Menunggu Pembayaran,Selesai,Dibatalkan',
         ]);
 
+        // Cari dan ubah status transaksi
         $transaction = Transaction::findOrFail($request->transaction_id);
         $transaction->status = $request->status;
         $transaction->save();
@@ -118,25 +128,23 @@ class TransactionController extends Controller
 
     public function cancel(Request $request)
     {
-        // dd($request->all());
+        // Validasi data
         $request->validate([
             'transaction_id' => 'required|exists:transactions,id',
         ]);
 
-
         $transaction = Transaction::where('order_id', $request->order_id)->firstOrFail();
-        // dd($transaction);
 
         // Midtrans Configuration
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false); // Set to true for production
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized = env('MIDTRANS_IS_SANITIZED', true);
         Config::$is3ds = env('MIDTRANS_IS_3DS', true);
 
         try {
             $cancel = \Midtrans\Transaction::cancel($request->order_id);
 
-            // Update transaction status in database
+            // Cari dan ubah status transaksi
             $transaction->status = 'Dibatalkan';
             $transaction->save();
 
@@ -147,7 +155,7 @@ class TransactionController extends Controller
     }
     public function getUnpaidCount()
     {
-        // Menghitung jumlah transaksi yang belum terbayar (statusnya bukan 'Selesai')
+        // Menghitung jumlah transaksi yang belum terbayar
         $unpaidCount = Transaction::where('user_id', auth()->id())
             ->whereNotIn('status', ['Selesai', 'Dibatalkan', 'Ditolak', 'Kedaluwarsa'])
             ->count();
@@ -157,9 +165,8 @@ class TransactionController extends Controller
 
     public function syncStatus(Request $request)
     {
-        // dd($request->all());
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false); // Set to true for production
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized = env('MIDTRANS_IS_SANITIZED', true);
         Config::$is3ds = env('MIDTRANS_IS_3DS', true);
 
@@ -169,11 +176,9 @@ class TransactionController extends Controller
             $status = MidtransTransaction::status($request->order_id);
             $transaction = Transaction::where('order_id', $request->order_id)->firstOrFail();
 
-
-            // Sinkronkan status di database
+            // Menyimpan status dari Midtrans ke database
             $transaction->status = $this->mapMidtransStatus($status->transaction_status);
             $transaction->save();
-            // dd($transaction);
 
             return response()->json(['message' => 'Transaction status synced successfully.']);
         } catch (\Exception $e) {
@@ -181,9 +186,9 @@ class TransactionController extends Controller
         }
     }
 
-    // Metode untuk memetakan status dari Midtrans ke status lokal
     private function mapMidtransStatus($midtransStatus)
     {
+        // Mengubah status Midtrans ke status yang sesuai
         switch ($midtransStatus) {
             case 'settlement':
                 return 'Selesai';
@@ -202,21 +207,21 @@ class TransactionController extends Controller
 
     public function finish(Request $request)
     {
-        // Handle successful payment
+        // Jika payment sukses
         $orderId = $request->input('order_id');
         return view('transaction.finish', compact('orderId'));
     }
 
     public function unfinish(Request $request)
     {
-        // Handle unfinished payment
+        // Jika payment unfinish
         $orderId = $request->input('order_id');
         return view('transaction.unfinish', compact('orderId'));
     }
 
     public function error(Request $request)
     {
-        // Handle payment error
+        // Jika payment error
         $orderId = $request->input('order_id');
         return view('transaction.error', compact('orderId'));
     }
